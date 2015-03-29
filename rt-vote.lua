@@ -1,4 +1,4 @@
--- ../wrk/wrk -s rt-checkin.lua -c 100 -d 30 -t 4 http://localhost:4000 -- $USER 10000
+-- ../wrk/wrk -s rt-checkin.lua -c 100 -d 30 -t 4 http://localhost:4000 -- $USER 20 10000 1
 
 
 -- done = function(summary, latency, requests)
@@ -19,6 +19,9 @@ function setup(thread)
 end
 
 local i = 0
+local vid = 0
+local howMany = 0
+local opt = 0
 local hostname = "unkn"
 local threadname = "bot"
 
@@ -42,7 +45,9 @@ local counterReq = 0
 
 function init(args)
    hostname = args[1]
-   howMany = tonumber(args[2])
+   vid = args[2]
+   howMany = tonumber(args[3])
+   opt = tonumber(args[4])
 
    threadname = 'bot' .. hostname
    -- wrk bug, first request wrk.format ignored by wrk and not counted
@@ -55,7 +60,7 @@ function init(args)
    print(msg:format(id))
 end
 
-request = function()
+function request()
    counterReq = counterReq + 1
    if counterReq > howMany then
       return nil
@@ -63,16 +68,13 @@ request = function()
    
    i = i + 1
    local headers = {}
-   local postdata = '{"module":"rs","userName":"' .. threadname
-      .. i
-      .. '","password":123,"devicePlatform":"ios","deviceType":"type","name":"' .. threadname
-      .. i
-      .. '","sex":"male","birthday":"123", "benchUser":900}'
-   return wrk.format("POST", "/user/1/add-custom-user", headers, postdata)
+   headers['x-bench-bot'] = 1
+   headers['x-auth'] = '1560332363:'..threadname .. i ..':2:1427642858366:2592000:f81914742de5'
+   local postdata = '{"type":"production","vid":'.. vid..', "opt": '..opt..'}'
+   return wrk.format("POST", "/rs/1/v", headers, postdata)
 end
 
 -- example script that demonstrates use of thread:stop()
-
 local counterRes = 0
 
 function response()
